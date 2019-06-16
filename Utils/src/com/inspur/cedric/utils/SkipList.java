@@ -63,11 +63,11 @@ public class SkipList <T extends Comparable<? super T>> {
                 } else {
                     /**
                      * example: 
-                     * d ------> e
+                     * a ------> c
                      * |         |
                      * a -> b -> c
-                     * curr = e, prev = d, we find that e is bigger than what we want,
-                     * so we move to lower floor's next element: b
+                     * curr = c_upper, prev = a_upper, we find that e is bigger than what we want,
+                     * so we move to lower floor's next element, which is a_lower's next: b
                      */
                     curr = prev.getNext(--level);
                 }
