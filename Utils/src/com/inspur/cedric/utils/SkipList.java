@@ -10,6 +10,7 @@ import java.util.Random;
 public class SkipList <T extends Comparable<? super T>> {
 
     private int maxLevel;
+    private int currLevel;
     private SkipListNode<T> root;
     private int powers[];
     private Random rd = new Random(49);
@@ -19,9 +20,10 @@ public class SkipList <T extends Comparable<? super T>> {
     }
     
     public SkipList(int level) {
-        this.maxLevel = level;
+        maxLevel = level;
+        currLevel = 1;
         // root represents a header, with a null object and a level array
-        root = new SkipListNode<>(null, maxLevel);
+        root = new SkipListNode<>(null, maxLevel, 0);
         powers = new int[maxLevel];
         calPower();
     }
@@ -34,10 +36,10 @@ public class SkipList <T extends Comparable<? super T>> {
     }
     
     private int chooseLevel() {
-        int r = Math.abs(rd.nextInt()) % powers[maxLevel-1], res = 0;
+        int r = Math.abs(rd.nextInt()) % powers[maxLevel-1], res = 1;
         for(int i = maxLevel-2; i >= 0; --i) {
             if(r < powers[i]) {
-                res = maxLevel - i - 1;
+                res = maxLevel - i;
             } else {
                 break;
             }
@@ -46,11 +48,10 @@ public class SkipList <T extends Comparable<? super T>> {
     }
     
     public T search(T key) {
-        int level;
         SkipListNode<T> curr, prev;
-        for(level = maxLevel-1; level >= 0 && root.getNext(level) == null; --level); //first non-null node
+        int level = currLevel - 1;
         prev = curr = root.getNext(level);
-        while(true) {
+        while(curr != null) {
             // case 1: find the element
             if(key.equals(curr.getKey())) {
                 return curr.getKey();
@@ -85,104 +86,107 @@ public class SkipList <T extends Comparable<? super T>> {
                 }
             }
         }
+        return null;
     }
     
-    public void insert(T key) {
-        SkipListNode<T> prev = null;
-        SkipListNode<T> newNode = null;
-        int level = chooseLevel();
-        SkipListNode<T> curr = root.getNext(level);
-        for(int i = level; i >= 0; --i) {
-            while(curr != null && curr.getKey() != null && curr.getKey().compareTo(key) < 0) {
-                prev = curr;
+    @SuppressWarnings("unchecked")
+    public void insert(T key, double score) {
+        SkipListNode<T>[] needToBeUpdated = (SkipListNode<T>[])new SkipListNode[maxLevel];
+        int[] rank = new int[maxLevel];
+        SkipListNode<T> curr = root;
+        for(int i = currLevel-1; i >= 0; --i) {
+            rank[i] = i == currLevel-1 ? 0 : rank[i+1];
+            while(curr.getNext(i) != null
+                    && (curr.getNext(i).getScore() < score
+                            || (Double.compare(curr.getNext(i).getScore(), score) == 0)
+                            && curr.getNext(i).getKey().compareTo(key) < 0)
+            ) {
+                rank[i] += curr.getSpan(i);
                 curr = curr.getNext(i);
             }
-            if(curr != null && curr.getKey() != null && curr.getKey().equals(key)) {
-                return;
+            needToBeUpdated[i] = curr;
+        }
+        int level = chooseLevel();
+        curr = new SkipListNode<>(key, level, score);
+        if(level > currLevel) {
+            for(int i = currLevel; i < level; ++i) {
+                rank[i] = 0;
+                needToBeUpdated[i] = root;
+                needToBeUpdated[i].setSpan(-1, i);
             }
-            // insert
-            if(newNode == null) {
-                newNode = new SkipListNode<>(key, level+1);
-            }
-            if(prev == null) {
-                if(curr != root) {
-                    newNode.setNext(curr, i);
-                }
-                root.setNext(newNode, i);
-            } else {
-                prev.setNext(newNode, i);
-                newNode.setNext(curr, i);
-            }
+            currLevel = level;
+        }
+        for(int i = 0; i < level; ++i) {
+            curr.setNext(needToBeUpdated[i].getNext(i), i);
+            needToBeUpdated[i].setNext(curr, i);
             /**
-             * 1. this means moving to lower floor
-             * 2. the first while-loop will help us find the right position
-             * 3. curr is the first element larger than key
-             * 4. prev is the first element smaller than key
+             * 1. rank[i] is the distance between root and position of ith layer that new node to be inserted
+             * 2. span is the distance between node and its next node on ith layer
              */
-            if(i > 0) {
-                if(prev == null) {
-                    curr = root.getNext(i-1);
-                } else {
-                    curr = prev.getNext(i-1);
-                }
-            }
+            int span = needToBeUpdated[i].getSpan(i) == -1 ? -1 : needToBeUpdated[i].getSpan(i) - (rank[0] - rank[i]);
+            curr.setSpan(span, i);
+            needToBeUpdated[i].setSpan(rank[0] - rank[i] + 1, i);
+        }
+        for(int i = level; i < currLevel; ++i) {
+            // all level above new node increment their span by 1 on ith layer
+            needToBeUpdated[i].incSpan(i);
+        }
+        // update backward pointer
+        curr.setBackward(needToBeUpdated[0] == root ? null : needToBeUpdated[0]);
+        if(curr.getNext(0) != null) {
+            curr.getNext(0).setBackward(curr);
         }
     }
     
-    public boolean remove(T key) {
-        SkipListNode<T> prev = null;
-        int level = chooseLevel();
-        SkipListNode<T> curr = root.getNext(level);
-        boolean found = false;
-        for(int i = level; i >= 0; --i) {
-            while(curr != null && curr.getKey() != null && curr.getKey().compareTo(key) < 0) {
-                prev = curr;
+    @SuppressWarnings("unchecked")
+    public boolean remove(T key, double score) {
+        SkipListNode<T>[] needToBeUpdated = (SkipListNode<T>[])new SkipListNode[currLevel];
+        SkipListNode<T> curr = root;
+        for(int i = currLevel-1; i >= 0; --i) {
+            while(curr.getNext(i) != null
+                    && (curr.getNext(i).getScore() < score
+                            || (Double.compare(curr.getNext(i).getScore(), score) == 0)
+                            && curr.getNext(i).getKey().compareTo(key) < 0)
+            ) {
                 curr = curr.getNext(i);
             }
-            if(curr != null && curr.getKey() != null && curr.getKey().equals(key)) {
-                found = true;
-                if(prev == null) {
-                    root.setNext(curr.getNext(i), i);
-                    curr.setNext(null, i);
-                } else {
-                    prev.setNext(curr.getNext(i), i);
-                    curr.setNext(null, i);
-                }
-            }
-            if(i > 0) {
-                if(prev == null) {
-                    curr = root.getNext(i-1);
-                } else {
-                    curr = prev.getNext(i-1);
-                }
-            }
+            needToBeUpdated[i] = curr;
         }
-        return found;
+        curr = curr.getNext(0);
+        if(curr != null && curr.getKey().compareTo(key) == 0) {
+            for(int i = 0; i < currLevel; ++i) {
+                if(curr == needToBeUpdated[i].getNext(i)) {
+                    if(curr.getNext(i) == null) {
+                        needToBeUpdated[i].setSpan(-1, 0);
+                    } else {
+                        needToBeUpdated[i].incSpan(i, curr.getSpan(i)-1);
+                    }
+                    needToBeUpdated[i].setNext(curr.getNext(i), i);
+                } else {
+                    needToBeUpdated[i].decSpan(i);
+                }
+            }
+            if(curr.getNext(0) != null) {
+                curr.getNext(0).setBackward(curr.getBackward());
+            }
+            // decrement current level if it's empty
+            while(currLevel > 1 && root.getNext(currLevel-1) == null) {
+                currLevel--;
+            }
+            return true;
+        }
+        return false;
     }
     
     public void visualize() {
         if(root != null && root.getNext(0) != null) {
             SkipListNode<T> curr = root.getNext(0);
             while(curr != null) {
-                System.out.print(curr.getKey() + "(" + curr.getLength() + ")");
+                System.out.print(curr.getKey() + "(" + curr.getLength() + ", " + curr.getScore() +  ")");
                 System.out.print(" -> ");
                 curr = curr.getNext(0);
             }
             System.out.println("NULL");
         }
-    }
-    
-    public static void main(String[] args) {
-        SkipList<Integer> skipList = new SkipList<>(4);
-        skipList.insert(33);
-        skipList.insert(2);
-        skipList.insert(55);
-        skipList.visualize();
-        System.out.println(skipList.search(33) == null ? "Not Found" : "Bingo");
-        System.out.println(skipList.search(45) == null ? "Not Found" : "Bingo");
-        System.out.println(skipList.search(48) == null ? "Not Found" : "Bingo");
-        skipList.remove(33);
-        skipList.visualize();
-        System.out.println(skipList.search(33) == null ? "Not Found" : "Bingo");
     }
 }

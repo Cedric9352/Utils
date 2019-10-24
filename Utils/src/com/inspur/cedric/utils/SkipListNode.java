@@ -9,19 +9,20 @@ package com.inspur.cedric.utils;
 public class SkipListNode<T> {
 
     private T key;
-    private SkipListLevel level[];
-
-    private class SkipListLevel {
-        private SkipListNode<T> next;
-    }
+    private double score;
+    private int[] span;
+    private SkipListNode<T> next[];
+    private SkipListNode<T> backward;
     
     @SuppressWarnings("unchecked")
-    public SkipListNode(T key, int level) {
+    public SkipListNode(T key, int level, double score) {
         this.key = key;
-        this.level = (SkipListNode<T>.SkipListLevel[])new SkipListNode.SkipListLevel[level];
+        this.score = score;
+        this.span = new int[level];
         for(int i = 0; i < level; ++i) {
-            this.level[i] = new SkipListLevel();
+            span[i] = -1;
         }
+        this.next = (SkipListNode<T>[])new SkipListNode[level];
     }
     
     public T getKey() {
@@ -33,14 +34,50 @@ public class SkipListNode<T> {
     }
 
     public SkipListNode<T> getNext(int level) {
-        return this.level[level].next;
+        return this.next[level];
     }
 
     public void setNext(SkipListNode<T> next, int level) {
-        this.level[level].next = next;
+        this.next[level] = next;
     }
     
     public int getLength() {
-        return this.level.length;
+        return this.next.length;
+    }
+
+    public double getScore() {
+        return this.score;
+    }
+
+    public void setScore(double score) {
+        this.score = score;
+    }
+
+    public int getSpan(int level) {
+        return this.span[level];
+    }
+
+    public void setSpan(int span, int level) {
+        this.span[level] = span;
+    }
+
+    public void incSpan(int level) {
+        this.span[level]++;
+    }
+
+    public void incSpan(int level, int span) {
+        this.span[level] += span;
+    }
+
+    public void decSpan(int level) {
+        this.span[level]--;
+    }
+
+    public SkipListNode<T> getBackward() {
+        return backward;
+    }
+
+    public void setBackward(SkipListNode<T> backward) {
+        this.backward = backward;
     }
 }
