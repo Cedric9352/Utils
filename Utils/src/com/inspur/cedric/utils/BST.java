@@ -2,10 +2,60 @@ package com.inspur.cedric.utils;
 
 import java.util.Stack;
 
-import com.inspur.cedric.utils.BSTNode;
+public class BST<T extends Comparable<? super T>> {
+    static class BSTNode<T extends Comparable<? super T>> {
+        BSTNode<T> left;
+        BSTNode<T> right;
+        T data;
 
-public class BST <T extends Comparable<? super T>>
-{
+        BSTNode() {
+            this(null);
+        }
+
+        BSTNode(T data) {
+            this.data = data;
+            this.left = null;
+            this.right = null;
+        }
+
+        void setData(T data) {
+            this.data = data;
+        }
+
+        T getData() {
+            return data;
+        }
+
+        void setLeft(BSTNode<T> left) {
+            this.left = left;
+        }
+
+        BSTNode<T> getLeft() {
+            return left;
+        }
+
+        void setRight(BSTNode<T> right) {
+            this.right = right;
+        }
+
+        BSTNode<T> getRight() {
+            return right;
+        }
+
+        public boolean hasLeft() {
+            return left != null;
+        }
+
+        public boolean hasRight() {
+            return right != null;
+        }
+
+        @Override
+        public String toString() {
+            return data == null ? "null" : data.toString();
+        }
+    }
+
     private BSTNode<T> root;
 
     public BST() {
@@ -14,16 +64,16 @@ public class BST <T extends Comparable<? super T>>
 
     private BSTNode<T> removeMin(BSTNode<T> node, BSTNode<T> parent, boolean isLeft) {
         BSTNode<T> currNode = node, parentNode = parent;
-        while(currNode.getLeft() != null) {
+        while (currNode.getLeft() != null) {
             parentNode = currNode;
             currNode = currNode.getLeft();
         }
-        if(parentNode != parent) {
+        if (parentNode != parent) {
             // node has at least one left child
             parentNode.setLeft(currNode.getRight());
         } else {
             // node has no left child, delete itself
-            if(isLeft) {
+            if (isLeft) {
                 parentNode.setLeft(currNode.getRight());
             } else {
                 parentNode.setRight(currNode.getRight());
@@ -35,10 +85,10 @@ public class BST <T extends Comparable<? super T>>
 
     public BSTNode<T> search(T t) {
         BSTNode<T> currNode = root;
-        while(currNode != null) {
-            if(currNode.getData().compareTo(t) == 0) {
+        while (currNode != null) {
+            if (currNode.getData().compareTo(t) == 0) {
                 break;
-            } else if(currNode.getData().compareTo(t) > 0) {
+            } else if (currNode.getData().compareTo(t) > 0) {
                 currNode = currNode.getLeft();
             } else {
                 currNode = currNode.getRight();
@@ -48,26 +98,26 @@ public class BST <T extends Comparable<? super T>>
     }
 
     public void insert(T t) {
-        if(root == null) {
+        if (root == null) {
             root = new BSTNode<>(t);
         } else {
             BSTNode<T> currNode = root, parentNode = null;
-            while(true) {
-                if(currNode.getData().compareTo(t) == 0) {
+            while (true) {
+                if (currNode.getData().compareTo(t) == 0) {
                     // already have one
                     return;
                 } else {
                     parentNode = currNode;
-                    if(currNode.getData().compareTo(t) > 0) {
+                    if (currNode.getData().compareTo(t) > 0) {
                         currNode = currNode.getLeft();
-                        if(currNode == null) {
+                        if (currNode == null) {
                             BSTNode<T> newNode = new BSTNode<>(t);
                             parentNode.setLeft(newNode);
                             return;
                         }
                     } else {
                         currNode = currNode.getRight();
-                        if(currNode == null) {
+                        if (currNode == null) {
                             BSTNode<T> newNode = new BSTNode<>(t);
                             parentNode.setRight(newNode);
                             return;
@@ -80,23 +130,23 @@ public class BST <T extends Comparable<? super T>>
 
     public boolean remove(T t) {
         boolean res = false;
-        if(root != null) {
+        if (root != null) {
             BSTNode<T> currNode = root, parentNode = null;
             boolean isLeft = false;
-            while(currNode != null) {
-                if(currNode.getData().compareTo(t) > 0) {
+            while (currNode != null) {
+                if (currNode.getData().compareTo(t) > 0) {
                     parentNode = currNode;
                     currNode = currNode.getLeft();
                     isLeft = true;
-                } else if(currNode.getData().compareTo(t) < 0) {
+                } else if (currNode.getData().compareTo(t) < 0) {
                     parentNode = currNode;
                     currNode = currNode.getRight();
                     isLeft = false;
                 } else {
                     // find it
-                    if(!currNode.hasLeft() && !currNode.hasRight()) {
-                        if(parentNode != null) {
-                            if(isLeft) {
+                    if (!currNode.hasLeft() && !currNode.hasRight()) {
+                        if (parentNode != null) {
+                            if (isLeft) {
                                 parentNode.setLeft(null);
                             } else {
                                 parentNode.setRight(null);
@@ -108,8 +158,8 @@ public class BST <T extends Comparable<? super T>>
                         res = true;
                         break;
                     } else if (currNode.hasLeft() && !currNode.hasRight()) {
-                        if(parentNode != null) {
-                            if(isLeft) {
+                        if (parentNode != null) {
+                            if (isLeft) {
                                 parentNode.setLeft(currNode.getLeft());
                             } else {
                                 parentNode.setRight(currNode.getLeft());
@@ -122,9 +172,9 @@ public class BST <T extends Comparable<? super T>>
                         currNode.setLeft(null);
                         res = true;
                         break;
-                    } else if(!currNode.hasLeft() && currNode.hasRight()) {
-                        if(parentNode != null) {
-                            if(isLeft) {
+                    } else if (!currNode.hasLeft() && currNode.hasRight()) {
+                        if (parentNode != null) {
+                            if (isLeft) {
                                 parentNode.setLeft(currNode.getRight());
                             } else {
                                 parentNode.setRight(currNode.getRight());
@@ -138,9 +188,9 @@ public class BST <T extends Comparable<? super T>>
                         res = true;
                         break;
                     } else {
-                        if(parentNode != null) {
+                        if (parentNode != null) {
                             BSTNode<T> rightMin = removeMin(currNode.getRight(), currNode, false);
-                            if(isLeft) {
+                            if (isLeft) {
                                 parentNode.setLeft(rightMin);
                             } else {
                                 parentNode.setRight(rightMin);
@@ -166,18 +216,18 @@ public class BST <T extends Comparable<? super T>>
 
     // in-order traversal
     public boolean check() {
-        if(root == null) {
+        if (root == null) {
             return true;
         } else {
             BSTNode<T> currNode = root, previousNode = null;
             Stack<BSTNode<T>> stack = new Stack<>();
-            while(currNode != null || !stack.isEmpty()) {
-                if(currNode != null) {
+            while (currNode != null || !stack.isEmpty()) {
+                if (currNode != null) {
                     stack.push(currNode);
                     currNode = currNode.getLeft();
                 } else {
                     currNode = stack.pop();
-                    if(previousNode != null && previousNode.getData().compareTo(currNode.getData()) > 0) {
+                    if (previousNode != null && previousNode.getData().compareTo(currNode.getData()) > 0) {
                         return false;
                     }
                     previousNode = currNode;

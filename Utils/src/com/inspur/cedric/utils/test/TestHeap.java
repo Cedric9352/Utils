@@ -36,11 +36,11 @@ public class TestHeap {
         for(int i = 0; i < 16; ++i) {
             hMin3.insert(random.nextInt(100));
         }
-        Assert.assertTrue(hMin3.getCapacity() == 32);
+        Assert.assertEquals(32, hMin3.getCapacity());
         Assert.assertTrue(hMin3.check());
         
         hMin3.delete(hMin3.peek());
-        Assert.assertTrue(hMin3.getCapacity() == 16);
+        Assert.assertEquals(16, hMin3.getCapacity());
         Assert.assertTrue(hMin3.check());
     }
 }

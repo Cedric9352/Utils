@@ -14,11 +14,11 @@ public class TestSkipList {
         skipList.insert(2, 3.5);
         skipList.insert(55, 2.2);
         skipList.visualize();
-        Assert.assertTrue(skipList.search(33) != null);
-        Assert.assertTrue(skipList.search(45) == null);
-        Assert.assertTrue(skipList.search(48) == null);
+        Assert.assertNotNull(skipList.search(33));
+        Assert.assertNull(skipList.search(45));
+        Assert.assertNull(skipList.search(48));
         skipList.remove(33, 1.8);
         skipList.visualize();
-        Assert.assertTrue(skipList.search(33) == null);
+        Assert.assertNull(skipList.search(33));
     }
 }
